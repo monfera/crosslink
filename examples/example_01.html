@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Example 01</title>
+  <script src="../build/crosslink.min.js"></script>
+</head>
+<body>
+<div>
+  <button id="clickMe" onclick="buttonClick()">Click me</button>
+</div>
+<div>
+  <span><br>The click count is:</span>
+  <span id="count"></span>
+</div>
+<script>
+
+  const _ = crosslink
+
+  const countDisplay = document.getElementById('count')
+
+  const add = (a, b) => a + b
+  const format = n => `${n} click${n === 1 ? '' : 's'}`
+  const countReporter = text => countDisplay.innerText = text
+
+  const sensor = _.cell('click counter')
+  const counter = _.scan(add, 0, sensor) // analogous to [].reduce
+  const formatted = _(format)(counter) // analogous to [].map (multi arg OK)
+
+  _(countReporter)(formatted) // analogous to [].forEach - it's for side effect
+
+  const buttonClick = () => _.put(sensor, 1)
+
+</script>
+</body>
+</html>

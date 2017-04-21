@@ -1,0 +1,22 @@
+{
+  "name": "crosslink",
+  "version": "0.1.0",
+  "description": "A spreadsheet cell microlibrary inspired by arrowized Functional Reactive Programming",
+  "homepage": "https://github.com/monfera/crosslink",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "pretest": "npm run build",
+    "test": "tape 'test/**/*-test.js'",
+    "prepublish": "npm test"
+  },
+  "keywords": [],
+  "author": "Robert Monfera <monfera.robert@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.41.6",
+    "rollup-plugin-babili": "^3.0.0",
+    "tape": "^4.6.3"
+  }
+}
