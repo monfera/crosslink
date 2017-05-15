@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "description": "A spreadsheet cell microlibrary inspired by arrowized Functional Reactive Programming",
   "homepage": "https://github.com/monfera/crosslink",
-  "main": "index.js",
+  "main": "build/crosslink.min.js",
+  "module": "index",
+  "jsnext:main": "index",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monfera/crosslink"
+  },
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
