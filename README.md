@@ -1,6 +1,6 @@
 # crosslink.js
 
-Status: under active development, the API will change significantly. 
+A compact and fast data propagation library for use with higher level libraries or reactive programming. Under active development, the API is still evolving. 
 
 Install: 
 ```
@@ -13,14 +13,14 @@ Goals:
 * suitable for linking input, calculation and rendering components
 * small footprint (around 1kB minified and gzipped)
 * small API, focusing on the `lift` operation
-* fast
+* fast, with lots of headroom
 * predictable
 * glitch free
 * also suitable for asynchronous updates
 * reasonably safe and debuggable
 * covered with test cases
 
-The library follows the spreadsheet model: cells can be created explicitly, and values can be `put` in the cells. Cells can also be `remove`d. The real power comes from the `lift` operator, which makes a regular function eg. `(a, b) => a + b` and yields a _lifted_ function, in this case, a cell whose value is the sum of the values of two other cells. Each lifted function can be considered a cell in a spreadsheet which is a function that depends on other cells.
+The library follows the spreadsheet model: cells can be created explicitly, and values can be `put` in the cells. But the real power comes from the spreadsheet formulas, technically, the `lift` operator, which takes a plain function eg. `(a, b) => a + b` and yields a _lifted_ function, in this case, a function that makes a cell whose value is the sum of the values of two referenced cells. A lifted function can be used to make one or more cells in the spreadsheet. Unneeded cells can also be `remove`d. 
 
 Example: 
 
@@ -72,6 +72,10 @@ Comparable, more mature libraries with generally broader scope, a diversity of o
 - [MobX](https://github.com/mobxjs/mobx)
 - [Redux](https://github.com/reactjs/redux)
 
+Links:
+
+- [The Essence and Origins of Functional Reactive Programming](https://www.youtube.com/watch?v=j3Q32brCUAI) is the vision relative to which this library and other JavaScript libraries are overly operational, less declarative, and leave the continuity of time as an exercise to the user. It is possible to sample, integrate and differentiate variables that are considered continuous, for example, by implementing a backward looking [five point stencil](https://en.wikipedia.org/wiki/Five-point_stencil) to numerically differentiate values, for example, for modeling pointer speed. Modeling with continuous time might be a future abstraction.
+- [RxMarbles](http://rxmarbles.com/) by André Staltz is a wonderful resource for visualizing events and data propagation across time. Several current and future `crosslink` operations are covered.
 
 # API
 Generally, all kinds of values can be propagated except, currently, `undefined`, which now represents an _invalid_ status. In the future, the notion of an invalid state - e.g. due to not having received all input yet - might be separated from the concept of`undefined` although it arguably represents the concept of _not having been defined_.
@@ -124,6 +128,8 @@ _.put(weightKilograms, 81)
 
 ```
 This syntax is closer to the clutter-free mathematical notation than e.g. using `crosslink.lift(function)`.
+
+While it's good practice to _lift_ pure functions, they may also cause side effects, for example, changing some attribute of a DOM element. The side effecting cells are best done as leaf (or sink) nodes in the DAG. There may be good reasons for making other nodes have side effect, e.g. for logging data that flows through for debugging, for caching an expensive calculation or for initiating a calculation asynchronously, e.g. in a Web Worker. As this is a low level library, a future higher level API layer may have dedicated primitives or plugins for capturing DOM events, making changes, scheduling work, [LRU caching](https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_Recently_Used_.28LRU.29) etc.
 
 <a name="lift" href="#lift">#</a> _.<b>lift</b>(<i>function</i>)
 
