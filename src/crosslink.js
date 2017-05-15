@@ -79,7 +79,6 @@ const cell = (alias, inputs = [], calc = sourceEmitter, live = false) => {
 
   for(let i = 0; i < inputs.length; i++) {
     const cc = inputs[i]
-    //const currentLength = cc.ownUses.length
     cc.ownUses.push({
       c,
       invalidate: () => {
