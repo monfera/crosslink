@@ -1,6 +1,6 @@
 # crosslink.js
 
-A compact and fast data propagation library for use with higher level libraries or reactive programming. Under active development, the API is still evolving. 
+A compact and fast data propagation library for use with higher level libraries or reactive programming. Under active development, [the API](https://github.com/monfera/crosslink#api) is still evolving. 
 
 Install: 
 ```
@@ -63,19 +63,21 @@ Compact size is achieved by relying on no dependencies and trying to capture a m
 
 Note to users of observables libraries: The cells are analogous to [hot observables](https://medium.com/@benlesh/hot-vs-cold-observables-f8094ed53339) in that creating a cell will _not_ cause the reexecution of code upstream in the DAG. For example, a new cell that has the result of AJAX calls as an upstream will not cause a new AJAX request. Features analogous to cold observables can currently only be emulated, for example, by using factory functions or retaining the history of the downstream cells for replay.
 
-Comparable, more mature libraries with generally broader scope, a diversity of objectives and various overlaps with `crosslink` functionality (and one another):
+More mature libraries with generally broader scope, a diversity of objectives and various overlaps with `crosslink` functionality (and one another):
 
-- [flyd](https://github.com/paldepind/flyd)
-- [xstream](https://github.com/staltz/xstream)
-- [most](https://github.com/cujojs/most)
-- [RxJS](https://github.com/Reactive-Extensions/RxJS)
-- [MobX](https://github.com/mobxjs/mobx)
-- [Redux](https://github.com/reactjs/redux)
+- [flyd](https://github.com/paldepind/flyd) which, being closest in goals, was also an inspiration
+- [xstream](https://github.com/staltz/xstream) has a carefully crafted API and commented source
+- [most](https://github.com/cujojs/most) focuses on async operations and fast at that
+- [RxJS](https://github.com/Reactive-Extensions/RxJS) where it started in JS land
+- [MobX](https://github.com/mobxjs/mobx) a more magical take on data propagation
+- [Redux](https://github.com/reactjs/redux) predictable state container, and `scan` on steroids
 
 Links:
 
 - [The Essence and Origins of Functional Reactive Programming](https://www.youtube.com/watch?v=j3Q32brCUAI) is the vision relative to which this library and other JavaScript libraries are overly operational, less declarative, and leave the continuity of time as an exercise to the user. It is possible to sample, integrate and differentiate variables that are considered continuous, for example, by implementing a backward looking [five point stencil](https://en.wikipedia.org/wiki/Five-point_stencil) to numerically differentiate values, for example, for modeling pointer speed. Modeling with continuous time might be a future abstraction.
 - [RxMarbles](http://rxmarbles.com/) by André Staltz is a wonderful resource for visualizing events and data propagation across time. Several current and future `crosslink` operations are covered.
+
+The library name is a nod to [crossfilter.js](http://square.github.io/crossfilter/), [linked brushing](http://www.infovis-wiki.net/index.php?title=Linking_and_Brushing) and [crosstalk](https://github.com/rstudio/crosstalk) as `crosslink` will be a basis for related functionality.
 
 # API
 Generally, all kinds of values can be propagated except, currently, `undefined`, which now represents an _invalid_ status. In the future, the notion of an invalid state - e.g. due to not having received all input yet - might be separated from the concept of`undefined` although it arguably represents the concept of _not having been defined_.
