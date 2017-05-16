@@ -13,6 +13,7 @@ const remove = cc => {
   while(c = cc.inputs.pop()) {
     const index = c.ownUses.findIndex(u => u.c === c)
     c.ownUses.splice(index, 1)
+    if(!c.ownUses.length && !c.persist) remove(c) // prune upstream if needed
   }
   for(var u = 0; u < cc.ownUses.length; u++) remove(u)
 }
@@ -64,7 +65,7 @@ let statistics = {
 
 function sourceEmitter() {return this.inputValues[0]} // node w/ no cell input
 
-const cell = (alias, inputs = [], calc = sourceEmitter) => {
+const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
 
   const c = {
     alias,
@@ -73,6 +74,7 @@ const cell = (alias, inputs = [], calc = sourceEmitter) => {
     inputValues: inputs.map(cc => cc.value),
     ownUses: [],
     calc,
+    persist,
     inputs: inputs.slice()
   }
 

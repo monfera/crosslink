@@ -60,7 +60,6 @@ tape.test('test with only two cells', t => {
   t.equal(testVar, 15, 'sink was invoked again')
   t.equal(callCount, 2, 'two calls')
 
-
   try {
     _.put(source, _.invalid)
   } catch(error) {
@@ -82,7 +81,6 @@ tape.test('test node removal - leaf node', t => {
 
   let testVar = 1
   let callCount = 0
-  let undefinedErrorRaised = false
 
   t.equal(testVar, 1) // obv...
 
@@ -113,6 +111,93 @@ tape.test('test node removal - leaf node', t => {
 
   finalizeTest(t)
 })
+
+tape.test('test node removal with pruning', t => {
+
+  let testVar = 1
+  let callCount = 0
+  let mediatorCallCount = 0
+
+  t.equal(testVar, 1) // obv...
+
+  // source --> sink
+  const source = _.cell('source') // the name string is solely debug aid
+  const mediator = _.cell('mediator', [source], d => {
+    mediatorCallCount++
+    return d
+  })
+  const sink = _.cell('sink', [mediator], d => {
+    testVar = d * 3
+    callCount++
+    // no ret val - cells may exist for just side effects, as here for testing
+  })
+
+  t.equal(testVar, 1, 'DAG is set up, but no input happened yet')
+  t.equal(callCount, 0, 'no calls so far')
+
+  _.put(source, 2)
+  t.equal(testVar, 6, 'sink was invoked')
+  t.equal(callCount, 1, 'single call')
+  t.equal(mediatorCallCount, 1, 'single call')
+
+  _.put(source, 5)
+  t.equal(testVar, 15, 'sink was invoked again')
+  t.equal(callCount, 2, 'two calls')
+  t.equal(mediatorCallCount, 2, 'two calls')
+
+  _.remove(sink)
+
+  _.put(source, 7)
+  t.equal(testVar, 15, 'no change to result despite sink was invoked again')
+  t.equal(callCount, 2, 'no increase to call count as sink no longer present')
+  t.equal(mediatorCallCount, 2, 'no increase to mediator call count')
+
+  finalizeTest(t)
+})
+
+tape.test('test node removal - avoid pruning a `persist` node', t => {
+
+  let testVar = 1
+  let callCount = 0
+  let mediatorCallCount = 0
+
+  t.equal(testVar, 1) // obv...
+
+  // source --> sink
+  const source = _.cell('source') // the name string is solely debug aid
+  const mediator = _.cell('mediator', [source], d => {
+    mediatorCallCount++
+    return d
+  }, true) // <--- this `true` flag causes that pruning doesn't reach this cell
+  const sink = _.cell('sink', [mediator], d => {
+    testVar = d * 3
+    callCount++
+    // no ret val - cells may exist for just side effects, as here for testing
+  })
+
+  t.equal(testVar, 1, 'DAG is set up, but no input happened yet')
+  t.equal(callCount, 0, 'no calls so far')
+
+  _.put(source, 2)
+  t.equal(testVar, 6, 'sink was invoked')
+  t.equal(callCount, 1, 'single call')
+  t.equal(mediatorCallCount, 1, 'single call')
+
+  _.put(source, 5)
+  t.equal(testVar, 15, 'sink was invoked again')
+  t.equal(callCount, 2, 'two calls')
+  t.equal(mediatorCallCount, 2, 'two calls')
+
+  _.remove(sink)
+
+  _.put(source, 7)
+  t.equal(testVar, 15, 'no change to result despite sink was invoked again')
+  t.equal(callCount, 2, 'no increase to call count as sink no longer present')
+  t.equal(mediatorCallCount, 3, 'mediator left in place due to `persist`')
+
+  finalizeTest(t)
+})
+
 
 tape.test('circularity', t => {
 
