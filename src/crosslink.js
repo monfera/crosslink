@@ -9,12 +9,18 @@ const lift = fn => (...inputs) => {
     let c
     const toBeArgs = inputs.map(s => s.ownUses
       ? s
-      : (c = cell('genconst'), put(c, s), c)
+      : (c = cell('lift const'), put(c, s), c)
     )
     return cell(unique(fn.name || fn.toString()), toBeArgs, fn)
   } else {
     return fn.apply(0, inputs)
   }
+}
+
+const retain = liftedFunction => {
+  if(liftedFunction.ownUses)
+    liftedFunction.persist = true
+  return liftedFunction
 }
 
 const merge = (S1, S2) => {
@@ -79,4 +85,4 @@ const delay = (delay, S) => {
   return emitter
 }
 
-export {cell, lift, put, scan, merge, delay, remove, invalid, stats}
+export {cell, lift, put, scan, merge, delay, retain, remove, invalid, stats}

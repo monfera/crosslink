@@ -1,6 +1,6 @@
 # crosslink.js
 
-A compact and fast data propagation library for use with higher level libraries or reactive programming. Under active development, [the API](https://github.com/monfera/crosslink#api) is still evolving. 
+A compact and fast data propagation core for use with higher level libraries or reactive programming directly. Under development, [the API](https://github.com/monfera/crosslink#api) is still evolving. 
 
 Install: 
 ```
@@ -20,7 +20,7 @@ Goals:
 * reasonably safe and debuggable
 * covered with test cases
 
-The library follows the spreadsheet model: cells can be created explicitly, and values can be `put` in the cells. But the real power comes from the spreadsheet formulas, technically, the `lift` operator, which takes a plain function eg. `(a, b) => a + b` and yields a _lifted_ function, in this case, a function that makes a cell whose value is the sum of the values of two referenced cells. A lifted function can be used to make one or more cells in the spreadsheet. Unneeded cells can also be `remove`d. 
+The library implements the spreadsheet model. Cells can be created explicitly, and values can be `put` in source cells directly. But the real power comes from the spreadsheet formulas, technically, the `lift` operator, which takes a plain function eg. `(a, b) => a + b` and yields a _lifted_ function, in this case, a function that makes a cell whose value is the sum of the values of two referenced cells. A lifted function can be used to make one or more cells in the spreadsheet. Unneeded cells can also be `remove`d. The spreadsheet model is temporal: certain API functions rely on past values of the cell (`scan`), impact future values (`delay`) or mirror values from multiple cells (`merge`).
 
 Example: 
 
@@ -49,7 +49,7 @@ _.put(cellA, 2)
     // The cell value is 7
 ```
 
-The cells need to be managed as resources: in case they're generated in runtime in proportion to runtime or incoming data, they need to be `remove`d to avoid memory leaks. Even if the cells are established once on an initial execution and there is no subsequent cell creation, the cells remain operational even after they are not actually used, for example, if the DOM elements they influence had been removed from the document DOM - potentially expensive calculations continue to run on each input update, which may be left in by accident, and the DOM nodes may be prevented from garbage collection by the cell function continuing to hold a reference to them.
+The cells need to be managed as resources: if they're generated continuously or upon incoming data, they need to be `remove`d to avoid memory leaks. Even if the cells are established once on an initial execution and there is no subsequent cell creation, the cells remain operational even after they are not actually used, for example, if the DOM elements they influence had been removed from the document DOM - potentially expensive calculations continue to run on each input update, which may be left in by accident, and the DOM nodes may be prevented from garbage collection by the cell function continuing to hold a reference to them.
 
 The dependency links among cells form a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph). Following the spreadsheet model - [which is, at its core](https://en.wikipedia.org/wiki/Spreadsheet), a directed acyclic graph -, it uses [topological sorting](https://en.wikipedia.org/wiki/Topological_sorting) to propagate updates to dependencies (cells downstream in the DAG), as [commonly done](http://www.geeksforgeeks.org/topological-sorting/) in the case of spreadsheets.
 
@@ -163,3 +163,33 @@ Results a cell that is a delayed version of the supplied `cell` by `delayInMs` m
 ```javascript
 const finishSignal = _.delay(300, startSignal)
 ```
+
+<a name="remove" href="#remove">#</a> _.<b>remove</b>(<i>cell</i>)
+
+Removes a cell from the DAG. Its lifted function will not be called again even if its former upstream cells change. Not only the cell is removed, but also, the DAG is pruned: 
+
+- all downstream cells are recursively `remove`d as they can no longer receive updates
+- all upstream cells are recursively `remove`d that only served this cell being removed
+    - by extension, the downstream of removed upstream cells are also removed, and
+    - the upstreams of downstream cells are also pruned
+
+Naturally, only those upstreams are removed which don't have, or no longer have other uses (direct sinks) downstream.
+    
+As a consequence, ensure that a permanent cell that may have `remove`d downstream cells is `_.retain`ed. Such cells are typically part of a data model or view model that need to be present even if there is no data point to render at the moment.
+
+<a name="retain" href="#retain">#</a> _.<b>retain</b>(<i>cell</i>)
+
+Retains a cell which would otherwise be subject to pruning (recursive cell removal) in case a downstream cell is removed. 
+
+For example:
+ 
+- there is some model or view model cell carrying aggregate data, config etc. i.e. that need to be there, whether there is some number of data points currently rendered or not
+- a downstream (sink, leaf) cell is responsible for updating a DOM element that corresponds to a data point - let's assume it's the only data point
+- removing that data point, and freeing up the DOM element modifier cell with a `remove` will cause upstream cells to also be removed
+- if the model / view model cell is protected with a `_.retain(viewModelCell)` then it will not be pruned, and newly arriving data points can render (which needs the model / view model cell to function)
+
+Manual resource management, i.e. calling `remove` on a retained cell (or one of its direct or indirect sources) is necessary even if its usages are removed, as there's no automatic pruning from the downstream. A problematic memory leak may occur if retained cells are not removed eventually. Consequently, ensure that `_.retain` is used only as needed and such cells are freed up once they're of no use.
+
+Calling `_.retain` does not affect terminal sinks, as those nodes have no downstreams, i.e. pruning can not propagate to them in an upwards direction. Such cells can be removed either directly, or by removing one of their direct or indirect sources, in which case `retain` is not going to block pruning (removal) anyway. Wrapping is still advised with such cells as it's easy to search the source code for places where memory may leak, and such terminal sinks are the riskiest cells because they typically effect HTML nodes etc. which can get created prolifically but eventually get removed from the DOM. As it's crucial to free up such terminal sinks (in part, to release the reference to removed HTML elements ec.) and prune their upstreams after disuse (e.g. DOM element removal), using `retain` is an easy to search warning sign for untied loose ends. Library abstractions over `crosslink` don't need to do this wrapping if they automatically manage removal (eg. doing it together with the DOM element removal).
+
+_Not_ using `retain` is not going to prevent memory leaks. Pruning only happens when a cell is removed, and only impacts the cells that can be reached downstream (all of them) and upstream (those not protected with `retain`), and their downstreams and unprotected upstreams recursively. Therefore, the only purpose of pruning is to make resource management easier, as typically, only terminal sinks and retained cells will need to be explicitly deleted.

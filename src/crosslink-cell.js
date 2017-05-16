@@ -15,7 +15,7 @@ const remove = cc => {
     c.ownUses.splice(index, 1)
     if(!c.ownUses.length && !c.persist) remove(c) // prune upstream if needed
   }
-  for(var u = 0; u < cc.ownUses.length; u++) remove(u)
+  for(var u = 0; u < cc.ownUses.length; u++) remove(u) // prune downstream
 }
 
 const propagate = cc => {
