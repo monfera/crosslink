@@ -64,11 +64,10 @@ let statistics = {
 
 function sourceEmitter() {return this.inputValues[0]} // node w/ no cell input
 
-const cell = (alias, inputs = [], calc = sourceEmitter, live = false) => {
+const cell = (alias, inputs = [], calc = sourceEmitter) => {
 
   const c = {
     alias,
-    live,
     isSource: !inputs.length, // doesn't depend on anything; a starter node,
     value: invalid,
     inputValues: inputs.map(cc => cc.value),
@@ -94,7 +93,7 @@ const cell = (alias, inputs = [], calc = sourceEmitter, live = false) => {
     })
   }
 
-  if((live || (c.live = c.inputValues.indexOf(invalid) === -1)) && calc)
+  if(calc && c.inputValues.indexOf(invalid) === -1)
     c.value = calc.apply(c, c.inputValues)
 
   //statistics.cellsMade.push(l)
