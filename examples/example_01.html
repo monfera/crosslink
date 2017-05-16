@@ -27,7 +27,11 @@
   const counter = _.scan(add, 0, sensor) // analogous to [].reduce
   const formatted = _(format)(counter) // analogous to [].map (multi arg OK)
 
-  _(countReporter)(formatted) // analogous to [].forEach - it's for side effect
+  _(countReporter)(formatted) // analogous to [].forEach, side effect
+  // _.retain is not needed here as there's no `remove` and also it's a leaf
+  // node which can only be removed directly, or from pruning due to removing
+  // an upstream node, in which case it _must_ be removed irrespective of
+  // a possible `_.retain` enclosure
 
   const buttonClick = () => _.put(sensor, 1)
 
