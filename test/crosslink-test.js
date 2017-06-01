@@ -731,11 +731,11 @@ tape.test('scan test', t => {
 
   _.cell('sink', [scanner], s => result.push(s))
 
-  t.same(result, [1], 'nothing happened, yet the initial value is present')
+  t.same(result, [], 'nothing happened, yet the initial value is present')
   _.put(source, 3)
-  t.same(result, [1, 11], '1st reduced input')
+  t.same(result, [11], '1st reduced input')
   _.put(source, 4)
-  t.same(result, [1, 11, 34], '2nd reduced input')
+  t.same(result, [11, 34], '2nd reduced input')
 
   finalizeTest(t)
 })
@@ -752,11 +752,11 @@ tape.test('scan plus lift test', t => {
   }, 7, source)
   _.lift((o, w) => result.push(w + o))(otherSource, weirdSum)
 
-  t.same(result, [7], 'nothing happened yet')
+  t.same(result, [], 'nothing happened yet')
   _.put(source, 3)
-  t.same(result, [7, 23], '1st val')
+  t.same(result, [23], '1st val')
   _.put(source, 4)
-  t.same(result, [7, 23, 58], '2nd val')
+  t.same(result, [23, 58], '2nd val')
 
   finalizeTest(t)
 })

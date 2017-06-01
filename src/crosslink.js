@@ -44,34 +44,10 @@ const scanOld = (fn, acc, S) => {
   return merge(starter, updates)
 }
 
-const scan = (fn, acc, S) => {
-  // this doesn't work okay in timeslip (maybe unrelated reason)
-  const starter = cell('scan starter')
-  put(starter, acc)
-  return merge(
-    starter,
-    cell(
-      'scanned ' + (fn.name || fn.toString()) + ' ' + S.alias, [S],
-      function(s) {
-        return fn(this.value === invalid ? acc : this.value, s)
-      }
-    )
-  )
-}
-
-// todo test it
-const scan0 = (fn, acc, S) => cell(
+const scan = (fn, acc, S) => cell(
   'scanned ' + (fn.name || fn.toString()) + ' ' + S.alias, [S],
   function(s) {
     return fn(this.value === invalid ? acc : this.value, s)
-  }
-)
-
-// todo test it
-const multiscan = (fn, acc, ...SS) => cell(
-  'multiscanned ' + (fn.name || fn.toString()), SS,
-  function(...ss) {
-    return fn(this.value === invalid ? acc : this.value, ...ss)
   }
 )
 
