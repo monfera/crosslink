@@ -46,7 +46,7 @@ _.put(cellB, 6)
     // The cell value is 9
 
 _.put(cellA, 2)
-    // The cell value is 7
+    // The cell value is 8
 ```
 
 The cells need to be managed as resources: if they're generated continuously or upon incoming data, they need to be `remove`d to avoid memory leaks. Even if the cells are established once on an initial execution and there is no subsequent cell creation, the cells remain operational even after they are not actually used, for example, if the DOM elements they influence had been removed from the document DOM - potentially expensive calculations continue to run on each input update, which may be left in by accident, and the DOM nodes may be prevented from garbage collection by the cell function continuing to hold a reference to them.
