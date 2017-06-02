@@ -65,6 +65,16 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
 
   const ownUses = []
 
+  const invalidate = () => {for(let {invalidate} of ownUses) invalidate()}
+
+  const propagate = () => {
+    if (argFlags[1] !== 0) return
+    currentCalc = c
+    var applyResult = calc.apply(c, inputValues)
+    c.value = applyResult
+    for (let {propagate} of ownUses) propagate()
+  }
+
   const c = {
     alias,
     isSource: !inputs.length, // doesn't depend on anything; a starter node,
@@ -75,39 +85,30 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
     calc,
     persist,
     inputs: inputs.slice(),
-    invalidate: () => {
-      for(var u = 0; u < ownUses.length; u++) ownUses[u].invalidate()
-    },
-    propagate: () => {
-      currentCalc = c
-      if (argFlags[1] !== 0) return
-      var applyResult = calc.apply(c, inputValues)
-      if (applyResult === invalid) return
-      c.value = applyResult
-      for (var u = 0; u < ownUses.length; u++) ownUses[u].propagate()
-    }
+    propagate,
+    invalidate
   }
 
-  for(let i = 0; i < inputs.length; i++) {
-    const cc = inputs[i]
+  inputs.forEach((input, i) => {
     const mask = 1 << i
-    cc.ownUses.push({
+    input.ownUses.push({
       c,
+      i,
       invalidate: () => {
-        if (c.inputValues[i] === invalid) return
-        c.inputValues[i] = invalid
-        c.argFlags[0] = 0 // clear all
-        c.argFlags[1] |= mask // set
-        c.invalidate()
+        if (inputValues[i] === invalid) return
+        inputValues[i] = invalid
+        argFlags[0] = 0 // clear all
+        argFlags[1] |= mask // set
+        invalidate()
       },
       propagate: () => {
-        c.inputValues[i] = cc.value
-        c.argFlags[0] |= mask // set
-        c.argFlags[1] &= ~mask // clear
-        c.propagate()
+        inputValues[i] = inputs[i].value
+        argFlags[0] |= mask // set
+        argFlags[1] &= ~mask // clear
+        propagate()
       }
     })
-  }
+  })
 
   if(calc && !argFlags[1])
     c.value = calc.apply(c, c.inputValues)
