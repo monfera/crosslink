@@ -4,10 +4,6 @@ let currentPut = null
 
 const invalid = void 0
 
-const invalidate = cc => {
-  for(var u = 0; u < cc.ownUses.length; u++) cc.ownUses[u].invalidate()
-}
-
 const remove = cc => {
   let c
   while(c = cc.inputs.pop()) {
@@ -16,15 +12,6 @@ const remove = cc => {
     if(!c.ownUses.length && !c.persist) remove(c) // prune upstream if needed
   }
   for(var u = 0; u < cc.ownUses.length; u++) remove(u) // prune downstream
-}
-
-const propagate = cc => {
-  currentCalc = cc
-  if (cc.argFlags[1] !== 0) return
-  var applyResult = cc.calc.apply(cc, cc.inputValues)
-  if (applyResult === invalid) return
-  cc.value = applyResult
-  for (var u = 0; u < cc.ownUses.length; u++) cc.ownUses[u].propagate()
 }
 
 // todo consider transactions to allow rollback (tempValue and crawl)
@@ -48,8 +35,8 @@ const put = (c, d) => {
   else {
     currentPut = c
     c.inputValues[0] = d
-    invalidate(c)
-    propagate(c)
+    c.invalidate()
+    c.propagate()
     currentCalc = null
     currentPut = null
     if(queue.length)
@@ -76,16 +63,29 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
     return val
   })
 
+  const ownUses = []
+
   const c = {
     alias,
     isSource: !inputs.length, // doesn't depend on anything; a starter node,
     value: invalid,
     argFlags,
     inputValues,
-    ownUses: [],
+    ownUses,
     calc,
     persist,
-    inputs: inputs.slice()
+    inputs: inputs.slice(),
+    invalidate: () => {
+      for(var u = 0; u < ownUses.length; u++) ownUses[u].invalidate()
+    },
+    propagate: () => {
+      currentCalc = c
+      if (argFlags[1] !== 0) return
+      var applyResult = calc.apply(c, inputValues)
+      if (applyResult === invalid) return
+      c.value = applyResult
+      for (var u = 0; u < ownUses.length; u++) ownUses[u].propagate()
+    }
   }
 
   for(let i = 0; i < inputs.length; i++) {
@@ -98,13 +98,13 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
         c.inputValues[i] = invalid
         c.argFlags[0] = 0 // clear all
         c.argFlags[1] |= mask // set
-        invalidate(c)
+        c.invalidate()
       },
       propagate: () => {
         c.inputValues[i] = cc.value
         c.argFlags[0] |= mask // set
         c.argFlags[1] &= ~mask // clear
-        propagate(c)
+        c.propagate()
       }
     })
   }
