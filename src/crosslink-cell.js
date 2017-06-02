@@ -4,7 +4,7 @@ let currentPut = null
 
 const invalid = void 0
 
-const invalidateSubgraph = cc => {
+const invalidate = cc => {
   for(var u = 0; u < cc.ownUses.length; u++) cc.ownUses[u].invalidate()
 }
 
@@ -20,7 +20,7 @@ const remove = cc => {
 
 const propagate = cc => {
   currentCalc = cc
-  if (cc.missing[0] !== 0) return
+  if (cc.argFlags[1] !== 0) return
   var applyResult = cc.calc.apply(cc, cc.inputValues)
   if (applyResult === invalid) return
   cc.value = applyResult
@@ -48,7 +48,7 @@ const put = (c, d) => {
   else {
     currentPut = c
     c.inputValues[0] = d
-    invalidateSubgraph(c)
+    invalidate(c)
     propagate(c)
     currentCalc = null
     currentPut = null
@@ -68,11 +68,11 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
 
   if(inputs.length > 32) throw new Error('Currently, up to 32 arguments are supported.')
 
-  const missing = new Uint32Array([0])
+  const argFlags = new Uint32Array([0, 0]) // [justUpdated, missing]
 
   const inputValues = inputs.map((cc, i) => {
     const val = cc.value
-    if(val === invalid) missing[0] |= 1 << i // set
+    argFlags[val === invalid ? 1 : 0] |= 1 << i // set
     return val
   })
 
@@ -80,7 +80,7 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
     alias,
     isSource: !inputs.length, // doesn't depend on anything; a starter node,
     value: invalid,
-    missing,
+    argFlags,
     inputValues,
     ownUses: [],
     calc,
@@ -90,24 +90,26 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
 
   for(let i = 0; i < inputs.length; i++) {
     const cc = inputs[i]
+    const mask = 1 << i
     cc.ownUses.push({
       c,
       invalidate: () => {
-        if (c.inputValues[i] !== invalid) {
-          c.inputValues[i] = invalid
-          c.missing[0] |= 1 << i // set
-          invalidateSubgraph(c)
-        }
+        if (c.inputValues[i] === invalid) return
+        c.inputValues[i] = invalid
+        c.argFlags[0] = 0 // clear all
+        c.argFlags[1] |= mask // set
+        invalidate(c)
       },
       propagate: () => {
         c.inputValues[i] = cc.value
-        c.missing[0] &= ~(1 << i) // clear
+        c.argFlags[0] |= mask // set
+        c.argFlags[1] &= ~mask // clear
         propagate(c)
       }
     })
   }
 
-  if(calc && !missing[0])
+  if(calc && !argFlags[1])
     c.value = calc.apply(c, c.inputValues)
 
   //statistics.cellsMade.push(l)

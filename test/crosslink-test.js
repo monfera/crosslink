@@ -51,10 +51,12 @@ tape.test('test with only two cells', t => {
 
   t.equal(testVar, 1, 'DAG is set up, but no input happened yet')
   t.equal(callCount, 0, 'no calls so far')
+  t.equal(sink.argFlags[0], 0, 'no args flagged as updated')
 
   _.put(source, 2)
   t.equal(testVar, 6, 'sink was invoked')
   t.equal(callCount, 1, 'single call')
+  t.equal(sink.argFlags[0], 1, 'argument 0 (mask: 2^0) flagged')
 
   _.put(source, 5)
   t.equal(testVar, 15, 'sink was invoked again')
@@ -379,22 +381,31 @@ tape.test('test with two sources, one target', t => {
 
   t.equal(testVar, 1, 'DAG is set up, but no input happened yet')
   t.equal(callCount, 0, 'no calls so far')
+  t.equal(sink.argFlags[0], 0, 'argument 0, 1 NOT flagged')
 
   _.put(S1, 2)
   t.equal(testVar, 1, 'sink 1 got data')
   t.equal(callCount, 0, 'no call yet')
+  t.equal(sink.argFlags[0], 1, 'argument 0 (mask 2^0) flagged')
 
   _.put(S2, 21)
   t.equal(testVar, 42, 'sink 2 got data now')
   t.equal(callCount, 1, 'single call happened')
+  t.equal(sink.argFlags[0], 3, 'argument 0, 1 (mask 2^1 + 2^0) flagged')
+  // ^^ both args are flagged b/c even though S1 happened earlier, it didn't
+  // then involve function execution due to S2 being `invalid` then
 
   _.put(S1, 5)
   t.equal(testVar, 105, 'sink 1 was invoked again')
   t.equal(callCount, 2, 'third call - updated as `s2` dependency already met')
+  t.equal(sink.argFlags[0], 1, 'argument 0 (mask 2 ^ 0) flagged')
+  // ^^ now only S1 changed; S2 already had a legit value
 
   _.put(S2, 5)
   t.equal(testVar, 25, 'sink 2 was invoked again')
   t.equal(callCount, 3, 'fourth call')
+  t.equal(sink.argFlags[0], 2, 'argument 1 (mask 2 ^ 1) flagged')
+  // ^^ now only S2 changed; S1 already had a legit value
 
   finalizeTest(t)
 })
@@ -448,18 +459,30 @@ tape.test('graph propagation; atomicity (single calc per node)', t => {
 
   t.equal(testVar, 1, 'DAG is set up, but no input happened yet')
   t.equal(calls, 0, 'no calls so far')
+  t.equal(B.argFlags[0], 0)
+  t.equal(C.argFlags[0], 0)
+  t.equal(D.argFlags[0], 0)
+  t.equal(E.argFlags[0], 0)
 
   _.put(A, 3)
   t.equal(testVar, 14, 'E was invoked')
   t.equal(calls, 1, 'single call')
   t.equal(dCalcs, 1, 'single call, though depends multiply on A')
   t.equal(eCalcs, 1, 'single call, though directly and indirectly under A')
+  t.equal(B.argFlags[0], 0b1)
+  t.equal(C.argFlags[0], 0b1)
+  t.equal(D.argFlags[0], 0b11)
+  t.equal(E.argFlags[0], 0b111)
 
   _.put(A, 5)
   t.equal(testVar, 9/5 + 10 + 10, 'E was invoked - 2')
   t.equal(calls, 2, 'single call - 2')
   t.equal(dCalcs, 2, 'single call, though depends multiply on A - 2')
   t.equal(eCalcs, 2, 'single call, though under A both ways - 2')
+  t.equal(B.argFlags[0], 0b1)
+  t.equal(C.argFlags[0], 0b1)
+  t.equal(D.argFlags[0], 0b11)
+  t.equal(E.argFlags[0], 0b111) // all three inputs get renewed when A changes
 
   finalizeTest(t)
 })
