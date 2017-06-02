@@ -28,7 +28,7 @@ tape.test('test self-inserting node', t => {
     t.equal(
       errorRaised,
       'Error: Self-inserting nodes now unsupported.',
-      'specific error on self-inserting nodewas raised')
+      'specific error on self-inserting node was raised')
   }
   finalizeTest(t)
 })

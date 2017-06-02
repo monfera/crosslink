@@ -20,10 +20,9 @@ const remove = cc => {
 
 const propagate = cc => {
   currentCalc = cc
-  if (cc.inputValues.indexOf(invalid) + 1) return // todo:consider O(0) counter
+  if (cc.missing[0] !== 0) return
   var applyResult = cc.calc.apply(cc, cc.inputValues)
-  if (applyResult === invalid)
-    return
+  if (applyResult === invalid) return
   cc.value = applyResult
   for (var u = 0; u < cc.ownUses.length; u++) cc.ownUses[u].propagate()
 }
@@ -67,11 +66,22 @@ function sourceEmitter() {return this.inputValues[0]} // node w/ no cell input
 
 const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
 
+  if(inputs.length > 32) throw new Error('Currently, up to 32 arguments are supported.')
+
+  const missing = new Uint32Array([0])
+
+  const inputValues = inputs.map((cc, i) => {
+    const val = cc.value
+    if(val === invalid) missing[0] |= 1 << i // set
+    return val
+  })
+
   const c = {
     alias,
     isSource: !inputs.length, // doesn't depend on anything; a starter node,
     value: invalid,
-    inputValues: inputs.map(cc => cc.value),
+    missing,
+    inputValues,
     ownUses: [],
     calc,
     persist,
@@ -85,17 +95,19 @@ const cell = (alias, inputs = [], calc = sourceEmitter, persist = false) => {
       invalidate: () => {
         if (c.inputValues[i] !== invalid) {
           c.inputValues[i] = invalid
+          c.missing[0] |= 1 << i // set
           invalidateSubgraph(c)
         }
       },
       propagate: () => {
         c.inputValues[i] = cc.value
+        c.missing[0] &= ~(1 << i) // clear
         propagate(c)
       }
     })
   }
 
-  if(calc && c.inputValues.indexOf(invalid) === -1)
+  if(calc && !missing[0])
     c.value = calc.apply(c, c.inputValues)
 
   //statistics.cellsMade.push(l)
