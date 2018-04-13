@@ -137,14 +137,26 @@ While it's good practice to _lift_ pure functions, they may also cause side effe
 
 See the previous entry.
 
+<a name="reduce" href="#reduce">#</a> _.<b>reduce</b>(<i>function</i>)
+
+Analogous to `Array.prototype.reduce` in that it acts as a reducer, and the first argument of the supplied function carries the previous value. Unlike `Array.prototype.reduce` however it supports an arbitrary number of subsequent arguments. If any of these input values change, the function will be rerun with its previous value (if any) and the current arguments. An initial value for `previous` can be supplied via the ES2015 default value. Example:
+
+```javascript
+const numbers = _.cell('numbers streamed in')
+const runningTotal = _.reduce((previousSum = 0, newValue) => previousSum + newValue)(numbers)
+_.lift(sum => console.log(sum))(runningTotal)
+_.put(numbers, 24)
+_.put(numbers, 72)
+```
+
 <a name="scan" href="#scan">#</a> _.<b>scan</b>(<i>function, initialValue, cell</i>)
 
 Accumulates values based on `cell`, similar to JavaScript `reduce`. The supplied `function` must have two arguments `prev` and `next` (can be named differently) such that the accumulating value - which is initially set to `initialValue` - will be `prev`, and the new input from the cell `cell` is the value `next`. Example:
 
 ```javascript
 const click = _.cell('mouseClick')
-_.put(click, true)
 const clickCount = _.scan((prev, next) => prev + next, 0, click)
+_.put(click, true)
 ```
 
 <a name="merge" href="#merge">#</a> _.<b>merge</b>(<i>cell1, cell2</i>)

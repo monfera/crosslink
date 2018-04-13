@@ -17,6 +17,8 @@ const lift = fn => (...inputs) => {
   }
 }
 
+const reduce = fn => lift(function(...inputs) {return fn(this.value, ...inputs)})
+
 const retain = liftedFunction => {
   if(liftedFunction.ownUses)
     liftedFunction.persist = true
@@ -61,4 +63,4 @@ const delay = (delay, S) => {
   return emitter
 }
 
-export {cell, lift, put, scan, merge, delay, retain, remove, invalid, stats}
+export {cell, lift, put, scan, merge, delay, retain, remove, invalid, stats, reduce}

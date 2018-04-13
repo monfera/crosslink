@@ -1,6 +1,6 @@
 {
   "name": "crosslink",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A spreadsheet cell microlibrary inspired by arrowized Functional Reactive Programming",
   "homepage": "https://github.com/monfera/crosslink",
   "main": "build/crosslink.min.js",

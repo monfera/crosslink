@@ -783,3 +783,31 @@ tape.test('scan plus lift test', t => {
 
   finalizeTest(t)
 })
+
+tape.test('reduce test that checks for passing on the previous value', t => {
+
+  const result = []
+  const prevVl = []
+
+  const source = _.cell('source')
+
+  _.reduce(function(prev, value) {
+    prevVl.push(prev)
+    const r = value * 3
+    result.push(r) // collecting for testing
+    return r
+  })(source)
+
+  t.same(result, [], 'nothing happened yet')
+  t.same(prevVl, [], 'nothing happened yet')
+
+  _.put(source, 3)
+  t.same(result, [9], '1st val')
+  t.same(prevVl, [_.invalid], '1st val')
+
+  _.put(source, 4)
+  t.same(result, [9, 12], '2nd val')
+  t.same(prevVl, [_.invalid, 9], '2nd val')
+
+  finalizeTest(t)
+})
