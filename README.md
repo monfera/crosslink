@@ -72,6 +72,8 @@ More mature libraries with generally broader scope, a diversity of objectives an
 - [MobX](https://github.com/mobxjs/mobx) a more magical take on data propagation
 - [Redux](https://github.com/reactjs/redux) predictable state container, and `scan` on steroids
 
+Watch: [Topologica](https://github.com/datavis-tech/topologica) by Curran Kelleher
+
 Links:
 
 - [The Essence and Origins of Functional Reactive Programming](https://www.youtube.com/watch?v=j3Q32brCUAI) is the vision relative to which this library and other JavaScript libraries are overly operational, less declarative, and leave the continuity of time as an exercise to the user. It is possible to sample, integrate and differentiate variables that are considered continuous, for example, by implementing a backward looking [five point stencil](https://en.wikipedia.org/wiki/Five-point_stencil) to numerically differentiate values, for example, for modeling pointer speed. Modeling with continuous time might be a future abstraction.
