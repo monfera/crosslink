@@ -57,7 +57,7 @@ It is possible for a DAG to have a node that depend on some upstream node throug
 
 It _is_ possible for a cell update function to `put` a value in any cell, but if the data propagation from _that_ cell causes a recalculation of the initiating cell, a circularity error will be signaled.
 
-The speed and predictable updates are due to synchronous operations. Data are propagated in the DAG synchronously. By consequence, to avoid UI lock-up, long-running cell operations are best done asynchronously, e.g. in a `setTimeout`, Web Worker, or some method of incremental recalculation. Currently, the output of the asynchronously scheduled operation needs to update a cell different from the one doing the scheduling, but this restricion might be lifted in the future.
+The speed and predictable updates are due to synchronous operations. Data are propagated in the DAG synchronously. By consequence, to avoid UI lock-up, long-running cell operations are best done [asynchronously](https://www.scaler.com/topics/javascript/asynchronous-javascript/), e.g. in a `setTimeout`, Web Worker, or some method of incremental recalculation. Currently, the output of the asynchronously scheduled operation needs to update a cell different from the one doing the scheduling, but this restricion might be lifted in the future.
 
 Compact size is achieved by relying on no dependencies and trying to capture a minimal set of functions, from which useful functionality can be composed. The primary method of composition is the use of `lift`, which is currently suitable for stateless calculations. Currently, few other operators are supported: `scan`, `merge` and `delay`. New functionality will be added as needed.  
 
